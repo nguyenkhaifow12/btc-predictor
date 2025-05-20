@@ -1,39 +1,39 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Dự đoán BTC với Đa chỉ báo</title>
+  <meta charset="UTF-8" />
+  <title>Dự đoán xu hướng BTC</title>
   <script src="https://cdn.jsdelivr.net/npm/technicalindicators@3.1.0/dist/browser.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background-color: #f5f5f5; }
-    h2 { color: #333; }
-    button {
-      padding: 10px 15px;
-      background-color: #0066cc;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 16px;
-    }
-    .result {
-      margin-top: 20px;
-      background: #fff;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
-    }
+    body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; }
+    button { padding: 10px 15px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    #result { margin-top: 20px; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px #ccc; }
     ul { padding-left: 20px; }
   </style>
 </head>
 <body>
-  <h2>🔍 Dự đoán xu hướng BTC</h2>
-  <button onclick="fetchDataAndPredict()">Phân tích ngay</button>
-  <div id="result" class="result"></div>
+  <h2>🔍 Dự đoán xu hướng BTC với Đa chỉ báo</h2>
+  <button onclick="startAnalysis()">Phân tích ngay</button>
+  <div id="result"></div>
 
   <script>
-    async function fetchDataAndPredict() {
+    async function startAnalysis() {
+      const waitForTechnicalIndicators = () => new Promise((resolve, reject) => {
+        let attempts = 0;
+        const interval = setInterval(() => {
+          if (window.technicalindicators && window.technicalindicators.EMA) {
+            clearInterval(interval);
+            resolve();
+          } else if (++attempts > 10) {
+            clearInterval(interval);
+            reject(new Error("technicalindicators chưa sẵn sàng"));
+          }
+        }, 200);
+      });
+
       try {
+        await waitForTechnicalIndicators();
+
         const { EMA, MACD, RSI, ADX } = window.technicalindicators;
 
         const [priceRes, fundingRes, oiRes] = await Promise.all([
@@ -46,6 +46,7 @@
         const fundingRate = parseFloat((await fundingRes.json())[0].fundingRate);
         const openInterest = parseFloat((await oiRes.json()).openInterest);
 
+        // Giả lập dữ liệu giá đóng cửa
         const closePrices = Array.from({ length: 200 }, () => price * (1 + (Math.random() - 0.5) * 0.02));
 
         const ema20 = EMA.calculate({ period: 20, values: closePrices });
@@ -80,41 +81,30 @@
         const plusDI = adx.at(-1)?.pdi;
         const minusDI = adx.at(-1)?.mdi;
 
-        const volume = 1200;
-        const avgVolume = 1000;
-        const oiVolume = 1500;
-        const outflow = 1100;
-        const candle = 'bullish';
+        // Dữ liệu phụ (mock)
+        const volume = 1200, avgVolume = 1000, oiVolume = 1500, outflow = 1100;
+        const candle = "bullish";
 
         let signals = [];
 
-        if (ema20Val > ema50Val && ema50Val > ema200Val)
-          signals.push("✅ EMA20 > EMA50 > EMA200");
-        if (macdVal > macdSignal)
-          signals.push("✅ MACD > Signal");
-        if (rsiVal > 55 && rsiVal < 70)
-          signals.push("✅ RSI > 55 và < 70");
-        if (adxVal > 25 && plusDI > minusDI)
-          signals.push("✅ ADX > 25 và +DI > -DI");
-        if (volume > avgVolume)
-          signals.push("✅ Volume cao hơn trung bình");
-        if (fundingRate < 0)
-          signals.push("✅ Funding Rate < 0 → dễ đảo chiều tăng");
-        if (openInterest > 0 && oiVolume > avgVolume)
-          signals.push("✅ OI và Volume tăng mạnh → xác nhận trend");
-        if (outflow > 1000)
-          signals.push("✅ BTC rút khỏi sàn nhiều → tín hiệu tích trữ");
-        if (candle === "bullish")
-          signals.push("✅ Mô hình nến tăng gần đây");
+        if (ema20Val > ema50Val && ema50Val > ema200Val) signals.push("✅ EMA20 > EMA50 > EMA200");
+        if (macdVal > macdSignal) signals.push("✅ MACD > Signal");
+        if (rsiVal > 55 && rsiVal < 70) signals.push("✅ RSI > 55 và < 70");
+        if (adxVal > 25 && plusDI > minusDI) signals.push("✅ ADX > 25 và +DI > -DI");
+        if (volume > avgVolume) signals.push("✅ Volume cao hơn trung bình");
+        if (fundingRate < 0) signals.push("✅ Funding Rate < 0 → dễ đảo chiều tăng");
+        if (openInterest > 0 && oiVolume > avgVolume) signals.push("✅ OI và Volume tăng mạnh → xác nhận trend");
+        if (outflow > 1000) signals.push("✅ BTC rút khỏi sàn nhiều → tín hiệu tích trữ");
+        if (candle === "bullish") signals.push("✅ Mô hình nến tăng gần đây");
 
-        const finalSignal = signals.length >= 6
-          ? "📈 Tín hiệu mạnh: Có thể mua thử với vị thế nhỏ"
-          : signals.length >= 3
-            ? "📊 Tín hiệu trung lập: Theo dõi thêm"
-            : "⚠️ Tín hiệu yếu hoặc không rõ ràng: Chờ thêm";
+        const finalSignal =
+          signals.length >= 6 ? "📈 Tín hiệu mạnh: Có thể mua thử với vị thế nhỏ" :
+          signals.length >= 3 ? "📊 Tín hiệu trung lập: Theo dõi thêm" :
+          "⚠️ Tín hiệu yếu hoặc không rõ ràng: Chờ thêm";
 
         document.getElementById('result').innerHTML =
-          `<h3>Kết quả dự đoán:</h3><ul><li>${signals.join('</li><li>')}</li></ul><p><strong>${finalSignal}</strong></p>`;
+          `<h3>Kết quả:</h3><ul><li>${signals.join('</li><li>')}</li></ul><p><strong>${finalSignal}</strong></p>`;
+
       } catch (error) {
         document.getElementById('result').innerHTML = `<p style="color:red">❌ Lỗi: ${error.message}</p>`;
         console.error(error);
