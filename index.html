@@ -4,7 +4,13 @@
   <meta charset="UTF-8">
   <title>Dự đoán BTC với Đa chỉ báo</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/technicalindicators@3.0.2/dist/browser.js"></script>
+
+  <!-- Sửa lại technicalindicators để tránh lỗi undefined -->
+  <script src="https://unpkg.com/technicalindicators@3.0.2/dist/browser.js"></script>
+  <script>
+    const technicalindicators = window.technicalindicators;
+  </script>
+
   <style>
     body { font-family: Arial; margin: 20px; background: #f7f7f7; }
     h2 { color: #333; }
@@ -34,7 +40,6 @@
         const fundingRate = parseFloat((await fundingRes.json())[0].fundingRate);
         const openInterest = parseFloat((await oiRes.json()).openInterest);
 
-        // Dữ liệu giả lập cho ví dụ (có thể thay bằng API lịch sử giá sau)
         const closePrices = Array.from({length: 200}, () => price * (1 + (Math.random() - 0.5) * 0.02));
 
         const ema20 = technicalindicators.EMA.calculate({period: 20, values: closePrices});
@@ -61,7 +66,7 @@
         const rsiVal = rsi.at(-1);
         const adxVal = adx.at(-1)?.adx, plusDI = adx.at(-1)?.pdi, minusDI = adx.at(-1)?.mdi;
 
-        const volume = 1000 + Math.random() * 200; // giả lập
+        const volume = 1000 + Math.random() * 200;
         const avgVolume = 950;
         const oiVolume = 1200;
         const outflow = 1100;
