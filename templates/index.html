@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>BTC Predictor</title>
+</head>
+<body>
+  <h1>Dự đoán BTC</h1>
+  <div id="result"></div>
+
+  <script>
+    fetch("/predict")
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("result").innerHTML = `
+          <p><strong>Giá hiện tại:</strong> $${data.price_now.toFixed(2)}</p>
+          <p><strong>Quyết định:</strong> ${data.decision}</p>
+          <p><strong>Điểm kỹ thuật:</strong> ${data.score}/7</p>
+          <p><strong>Mô hình nến:</strong> ${data.patterns.join(", ") || 'Không có'}</p>
+          <p><strong>Dữ liệu On-chain:</strong><br>${data.onchain_notes.join("<br>")}</p>
+        `;
+      });
+  </script>
+</body>
+</html>
