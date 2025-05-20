@@ -4,46 +4,39 @@
   <meta charset="UTF-8">
   <title>Dự đoán BTC với Đa chỉ báo</title>
 
-  <!-- Chart.js để vẽ biểu đồ nếu cần -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <!-- ✅ Dùng bản ổn định có technicalindicators trên window -->
+  <!-- Sử dụng bản browser của technicalindicators -->
   <script src="https://cdn.jsdelivr.net/npm/technicalindicators@2.0.16/dist/browser.js"></script>
 
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #f7f7f7; }
+    body { font-family: Arial, sans-serif; padding: 20px; background-color: #f5f5f5; }
     h2 { color: #333; }
     button {
-      margin-top: 20px;
       padding: 10px 15px;
-      background: #008080;
-      color: #fff;
+      background-color: #0066cc;
+      color: white;
       border: none;
-      cursor: pointer;
       border-radius: 5px;
+      cursor: pointer;
       font-size: 16px;
     }
     .result {
-      margin-top: 30px;
-      padding: 20px;
+      margin-top: 20px;
       background: #fff;
+      padding: 15px;
       border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
     }
     ul { padding-left: 20px; }
   </style>
 </head>
 <body>
-  <h2>Dự đoán BTC - Kết hợp đa chỉ báo</h2>
-  <button onclick="fetchDataAndPredict()">📡 Lấy dữ liệu & Dự đoán ngay</button>
-
+  <h2>🔍 Dự đoán xu hướng BTC</h2>
+  <button onclick="fetchDataAndPredict()">Phân tích ngay</button>
   <div id="result" class="result"></div>
 
   <script>
     async function fetchDataAndPredict() {
       try {
-        const technicalindicators = window.technicalindicators;
-
         const [priceRes, fundingRes, oiRes] = await Promise.all([
           fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT'),
           fetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=1'),
@@ -54,14 +47,13 @@
         const fundingRate = parseFloat((await fundingRes.json())[0].fundingRate);
         const openInterest = parseFloat((await oiRes.json()).openInterest);
 
-        // Dữ liệu giả lập gần giống thực tế
         const closePrices = Array.from({length: 200}, () => price * (1 + (Math.random() - 0.5) * 0.02));
 
-        const ema20 = technicalindicators.EMA.calculate({period: 20, values: closePrices});
-        const ema50 = technicalindicators.EMA.calculate({period: 50, values: closePrices});
-        const ema200 = technicalindicators.EMA.calculate({period: 200, values: closePrices});
+        const ema20 = window.EMA.calculate({ period: 20, values: closePrices });
+        const ema50 = window.EMA.calculate({ period: 50, values: closePrices });
+        const ema200 = window.EMA.calculate({ period: 200, values: closePrices });
 
-        const macd = technicalindicators.MACD.calculate({
+        const macd = window.MACD.calculate({
           values: closePrices,
           fastPeriod: 12,
           slowPeriod: 26,
@@ -70,8 +62,9 @@
           SimpleMASignal: false
         });
 
-        const rsi = technicalindicators.RSI.calculate({period: 14, values: closePrices});
-        const adx = technicalindicators.ADX.calculate({
+        const rsi = window.RSI.calculate({ period: 14, values: closePrices });
+
+        const adx = window.ADX.calculate({
           close: closePrices,
           high: closePrices.map(p => p * 1.01),
           low: closePrices.map(p => p * 0.99),
@@ -88,9 +81,9 @@
         const plusDI = adx.at(-1)?.pdi;
         const minusDI = adx.at(-1)?.mdi;
 
-        const volume = 1000 + Math.random() * 200; // giả lập
-        const avgVolume = 950;
-        const oiVolume = 1200;
+        const volume = 1200;
+        const avgVolume = 1000;
+        const oiVolume = 1500;
         const outflow = 1100;
         const candle = 'bullish';
 
@@ -124,7 +117,7 @@
         document.getElementById('result').innerHTML =
           `<h3>Kết quả dự đoán:</h3><ul><li>${signals.join('</li><li>')}</li></ul><p><strong>${finalSignal}</strong></p>`;
       } catch (error) {
-        document.getElementById('result').innerHTML = `<p style="color:red">❌ Lỗi khi lấy dữ liệu hoặc tính toán: ${error}</p>`;
+        document.getElementById('result').innerHTML = `<p style="color:red">❌ Lỗi: ${error.message}</p>`;
         console.error(error);
       }
     }
