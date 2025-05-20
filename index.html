@@ -3,10 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Dự đoán BTC với Đa chỉ báo</title>
-
-  <!-- Sử dụng bản browser của technicalindicators -->
-  <script src="https://cdn.jsdelivr.net/npm/technicalindicators@2.0.16/dist/browser.js"></script>
-
+  <script src="https://cdn.jsdelivr.net/npm/technicalindicators@3.1.0/dist/browser.js"></script>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; background-color: #f5f5f5; }
     h2 { color: #333; }
@@ -37,6 +34,8 @@
   <script>
     async function fetchDataAndPredict() {
       try {
+        const { EMA, MACD, RSI, ADX } = window.technicalindicators;
+
         const [priceRes, fundingRes, oiRes] = await Promise.all([
           fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT'),
           fetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=1'),
@@ -47,13 +46,13 @@
         const fundingRate = parseFloat((await fundingRes.json())[0].fundingRate);
         const openInterest = parseFloat((await oiRes.json()).openInterest);
 
-        const closePrices = Array.from({length: 200}, () => price * (1 + (Math.random() - 0.5) * 0.02));
+        const closePrices = Array.from({ length: 200 }, () => price * (1 + (Math.random() - 0.5) * 0.02));
 
-        const ema20 = window.EMA.calculate({ period: 20, values: closePrices });
-        const ema50 = window.EMA.calculate({ period: 50, values: closePrices });
-        const ema200 = window.EMA.calculate({ period: 200, values: closePrices });
+        const ema20 = EMA.calculate({ period: 20, values: closePrices });
+        const ema50 = EMA.calculate({ period: 50, values: closePrices });
+        const ema200 = EMA.calculate({ period: 200, values: closePrices });
 
-        const macd = window.MACD.calculate({
+        const macd = MACD.calculate({
           values: closePrices,
           fastPeriod: 12,
           slowPeriod: 26,
@@ -62,9 +61,9 @@
           SimpleMASignal: false
         });
 
-        const rsi = window.RSI.calculate({ period: 14, values: closePrices });
+        const rsi = RSI.calculate({ period: 14, values: closePrices });
 
-        const adx = window.ADX.calculate({
+        const adx = ADX.calculate({
           close: closePrices,
           high: closePrices.map(p => p * 1.01),
           low: closePrices.map(p => p * 0.99),
